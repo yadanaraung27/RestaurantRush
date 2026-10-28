@@ -1,0 +1,6 @@
+# Java build output
+out/
+#.class
+
+# macOS metadata
+.DS_Store
