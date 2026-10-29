@@ -43,9 +43,9 @@ public class GameCLI {
         System.out.println("============================================================");
         System.out.println(" TURN " + turn);
         System.out.println("============================================================");
-        System.out.printf("  %-28s %d%n", "Paid customers:", result.getPaidCustomers());
-        System.out.printf("  %-28s %s%n", "Total revenue:", result.getRevenue());
-        System.out.printf("  %-28s %s%n", "Average paid satisfaction:", averageSatisfactionText(result));
+        System.out.printf("  %-24s %8d%n", "Paid Customers", result.getPaidCustomers());
+        System.out.printf("  %-24s %8s%n", "Total Revenue", result.getRevenue());
+        System.out.printf("  %-24s %8s%n", "Avg. Paid Satisfaction", averageSatisfactionText(result));
 
         System.out.println();
         System.out.println("Waiting queue:");
@@ -166,48 +166,77 @@ public class GameCLI {
     public void displayTurnResult(GameResult result) {
         System.out.println("------------------------------------------------------------");
         System.out.println(" End of turn");
-        System.out.printf("  %-28s %d%n", "Paid customers:", result.getPaidCustomers());
-        System.out.printf("  %-28s %d%n", "Served customers:", result.getServedCustomers());
-        System.out.printf("  %-28s %d%n", "Unhappy departures:", result.getUnhappyDepartures());
-        System.out.printf("  %-28s %s%n", "Total revenue:", result.getRevenue());
-        System.out.printf("  %-28s %s%n", "Average paid satisfaction:", averageSatisfactionText(result));
-        System.out.printf("  %-28s %d%n", "Turns used:", result.getTurnsUsed());
+        System.out.printf("  %-24s %8d%n", "Served Customers", result.getServedCustomers());
+        System.out.printf("  %-24s %8d%n", "Unhappy Departures", result.getUnhappyDepartures());
+        System.out.printf("  %-24s %8d%n", "Paid Customers", result.getPaidCustomers());
+        System.out.printf("  %-24s %8s%n", "Total Revenue", result.getRevenue());
+        System.out.printf("  %-24s %8s%n", "Avg. Paid Satisfaction", averageSatisfactionText(result));
+        System.out.printf("  %-24s %8d%n", "Turns Used", result.getTurnsUsed());
         System.out.println("------------------------------------------------------------");
     }
 
     public void displayFinalResult(GameResult result) {
+        int metTargets = 0;
+        if (result.isPaidCustomersMet()) {
+            metTargets++;
+        }
+        if (result.isRevenueMet()) {
+            metTargets++;
+        }
+        if (result.isSatisfactionMet()) {
+            metTargets++;
+        }
+
         System.out.println();
         System.out.println("============================================================");
         System.out.println("                         GAME OVER");
-        System.out.println("                        FINAL RESULT");
         System.out.println("============================================================");
-        System.out.printf("  %-28s %d%n", "Served customers:", result.getServedCustomers());
-        System.out.printf("  %-28s %d%n", "Unhappy departures:", result.getUnhappyDepartures());
-        System.out.printf("  %-28s %d%n", "Paid customers:", result.getPaidCustomers());
-        System.out.printf("  %-28s %s%n", "Total revenue:", result.getRevenue());
-        System.out.printf("  %-28s %s%n", "Average paid satisfaction:", averageSatisfactionText(result));
-        System.out.printf("  %-28s %d%n", "Turns used:", result.getTurnsUsed());
         System.out.println();
-        System.out.println("Victory targets:");
-        System.out.printf("  %-28s %-20s %s%n", "Paid customers:",
-                result.getPaidCustomers() + " / " + GameResult.REQUIRED_PAID_CUSTOMERS,
+        System.out.println("                       FINAL RESULTS");
+        System.out.println("------------------------------------------------------------");
+        System.out.printf("  %-24s %8d%n", "Served Customers", result.getServedCustomers());
+        System.out.printf("  %-24s %8d%n", "Unhappy Departures", result.getUnhappyDepartures());
+        System.out.printf("  %-24s %8d%n", "Paid Customers", result.getPaidCustomers());
+        System.out.printf("  %-24s %8s%n", "Total Revenue", result.getRevenue());
+        System.out.printf("  %-24s %8s%n", "Avg. Paid Satisfaction", averageSatisfactionText(result));
+        System.out.printf("  %-24s %8d%n", "Turns Used", result.getTurnsUsed());
+        System.out.println();
+        System.out.println("============================================================");
+        System.out.println("                      VICTORY TARGETS");
+        System.out.println("============================================================");
+        System.out.printf("  %-24s %10s %10s %8s%n", "Objective", "Actual", "Target", "Status");
+        System.out.println("------------------------------------------------------------");
+        System.out.printf("  %-24s %10s %10s %8s%n", "Paid Customers",
+                result.getPaidCustomers(),
+                GameResult.REQUIRED_PAID_CUSTOMERS,
                 metText(result.isPaidCustomersMet()));
-        System.out.printf("  %-28s %-20s %s%n", "Total revenue:",
-                result.getRevenue() + " / " + Money.ofCents(GameResult.REQUIRED_REVENUE_CENTS),
+        System.out.printf("  %-24s %10s %10s %8s%n", "Total Revenue",
+                result.getRevenue(),
+                Money.ofCents(GameResult.REQUIRED_REVENUE_CENTS),
                 metText(result.isRevenueMet()));
-        System.out.printf("  %-28s %-20s %s%n", "Average paid satisfaction:",
-                averageSatisfactionText(result) + " / " + GameResult.REQUIRED_AVERAGE_SATISFACTION,
+        System.out.printf("  %-24s %10s %10s %8s%n", "Avg. Paid Satisfaction",
+                averageSatisfactionText(result),
+                GameResult.REQUIRED_AVERAGE_SATISFACTION,
                 metText(result.isSatisfactionMet()));
         System.out.println("------------------------------------------------------------");
-        System.out.println("  " + (result.isVictory() ? "VICTORY" : "DEFEAT"));
+        System.out.println();
+        if (result.isVictory()) {
+            System.out.println("                 *** VICTORY ACHIEVED! ***");
+            System.out.println();
+            System.out.println("                All 3 victory targets met.");
+        } else {
+            System.out.println("                       *** DEFEAT ***");
+            System.out.println();
+            System.out.println("                " + metTargets + " of 3 victory targets met.");
+        }
         System.out.println("============================================================");
     }
 
-    // Shows whether a victory target was met or not
+    // Returns the status label for a victory target
     private String metText(boolean met) {
         if (met) {
-            return "met";
+            return "[PASS]";
         }
-        return "not met";
+        return "[FAIL]";
     }
 }
