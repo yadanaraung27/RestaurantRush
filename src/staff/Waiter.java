@@ -3,19 +3,24 @@ package src.staff;
 import src.entity.AlaCarteItem;
 import src.entity.Customer;
 import src.entity.CustomerState;
+import src.entity.Money;
 import src.entity.Order;
 import src.entity.OrderStatus;
 import src.entity.Restaurant;
 import src.entity.Table;
 import src.exception.InvalidActionException;
+import src.service.PricingService;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Waiter extends Staff {
+    private final PricingService pricingService;
+
     // Constructor
-    public Waiter() {
+    public Waiter(PricingService pricingService) {
         super("Waiter");
+        this.pricingService = pricingService;
     }
 
     public String performTask(Restaurant restaurant, StaffAction action, String targetId) throws InvalidActionException {
@@ -44,10 +49,11 @@ public class Waiter extends Staff {
     private String takeOrder(Restaurant restaurant, String targetId) throws InvalidActionException {
         Customer customer = findCustomer(restaurant.getCustomersWaitingToOrder(), targetId, "the customers waiting to order");
         AlaCarteItem item = customer.chooseItem(restaurant.getMenu());
-        Order order = new Order(customer, item);
+        Money lockedPrice = pricingService.calculateLockedPrice(item, customer);
+        Order order = new Order(customer, item, lockedPrice);
         customer.assignOrder(order);
         restaurant.addOrder(order);
-        return customer.getId() + " chose " + item.getName() + " (" + item.getPrice() + ", " + prepUnitsText(item.getPrepUnits()) + ").";
+        return customer.getId() + " (" + customer.getTypeName() + ") chose " + item.getName() + " (" + lockedPrice + ", " + prepUnitsText(item.getPrepUnits()) + ").";
     }
 
     // Serve the chosen customer's READY order
