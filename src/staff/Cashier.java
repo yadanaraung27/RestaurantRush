@@ -28,7 +28,7 @@ public class Cashier extends Staff {
         if (order == null || order.getStatus() != OrderStatus.SERVED) {
             throw new InvalidActionException("Customer has no served order ready for payment.");
         }
-        Money bill = order.getOrderPrice();
+        Money bill = order.getLockedPrice();
         restaurant.recordPayment(bill);
         order.setStatus(OrderStatus.PAID);
         customer.setState(CustomerState.PAID);
