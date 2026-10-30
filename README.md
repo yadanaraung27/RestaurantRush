@@ -1,6 +1,6 @@
 # RestaurantRush
 
-RestaurantRush is a turn-based restaurant management game written in Java for the SC2002 Object-Oriented Design & Programming assignment. The player manages the restaurant staff over 18 turns while customers arrive, queue for tables, order food, wait for the kitchen, eat, and pay. The game ends in victory or defeat based on paid customers, revenue, and average customer satisfaction.
+RestaurantRush is a turn-based restaurant management game written in Java for the SC2002 Object-Oriented Design & Programming assignment. The player manages the restaurant staff over 18 turns while customers arrive, queue for tables, order food, wait for the kitchen, eat, and pay. The game ends in victory or defeat based on paid customers, revenue, and average paid-customer satisfaction.
 
 ## Table of Contents
 
@@ -15,10 +15,14 @@ RestaurantRush is a turn-based restaurant management game written in Java for th
   - [Features](#features)
   - [How to play](#how-to-play)
   - [Test notes](#test-notes)
+- [Stage 2 - Customer behaviour](#stage-2---customer-behaviour)
+  - [Features](#features-1)
+  - [How to play](#how-to-play-1)
+  - [Test notes](#test-notes-1)
 - [Stage transitions](#stage-transitions)
   - [Stage 1 to Stage 2](#stage-1-to-stage-2)
   - [Stage 2 to Stage 3](#stage-2-to-stage-3)
-- [Design documents](#design-documents)
+- [Design Diagrams](#design-diagrams)
 
 ## Project Stages
 
@@ -27,7 +31,7 @@ Each stage is a separate runnable version tagged in GitHub, and each builds on t
 | Stage | Git tag | What it adds |
 |---|---|---|
 | 1 | `stage-1` | Regular customers, an a-la-carte menu, Waiter/Chef/Cashier, the full turn loop, and victory/defeat. |
-| 2 | `stage-2` | Replaces two of the regular arrivals with a VIP and a Critic. The VIP loses 5 satisfaction per waiting turn and pays 10% less; the Critic loses 12 per turn and chooses the most expensive item on the menu. Adds scheduled arrivals, `CustomerFactory`, and `PricingService`. |
+| 2 | `stage-2` | Replaces two of the regular arrivals with a VIP and a Critic. The VIP loses 5 satisfaction per waiting turn and pays 10% less; the Critic loses 12 per turn and chooses the most expensive item on the menu. Adds `ArrivalSchedule` and `PricingService`. |
 | 3 | `stage-3` | Adds the Host (one extra seating per turn), ComboMeal (two items priced at 90% of their combined price, with preparation units summed), and Happy Hour (20% off orders taken while active, plus a satisfaction recovery at turn start). `PricingService` applies the VIP discount first, then Happy Hour. |
 
 ## Requirements
@@ -242,18 +246,184 @@ Expected final result:
 ============================================================
 ```
 
+## Stage 2 - Customer behaviour
+
+Stage 2 adds VIP and Critic customers while keeping the same turn flow and victory conditions. It is independently playable with the same build and `run.sh`, and it contains no Stage 3 features (Host, ComboMeal, or Happy Hour).
+
+### Features
+
+- Three customer types: Regular, VIP, and Critic.
+- VIP customers lose 5 satisfaction per waiting turn and pay 10% less.
+- Critic customers lose 12 satisfaction per waiting turn and always order the most expensive item on the menu. Ties keep menu order; with the current menu that is Pasta ($18.00, 2 prep units).
+- Six scheduled arrivals: C1 Regular, C4 VIP, C7 Regular, C10 Critic, C13 Regular, C16 Regular.
+- The turn table shows each customer's type, and the order message shows the locked price after any discount.
+- The design uses an abstract `Customer` with `RegularCustomer`, `VIPCustomer`, and `CriticCustomer` subclasses. `ArrivalSchedule` decides who arrives, and `PricingService` applies the discount.
+
+### How to play
+
+The commands and turn order are unchanged:
+
+1. Choose one Waiter action: `seat C1`, `order C1`, `serve C1`, or `wait`.
+2. Choose one Chef action: `prepare C1`, or `wait`.
+3. The Cashier automatically handles payment of the oldest eligible customer.
+
+The differences are the customer mix:
+
+- C4 is a VIP: the bill is discounted by 10% when the order is taken, and the order message shows the locked price.
+- C10 is a Critic: it orders Pasta, which needs two preparation units. The Chef must prepare it twice before the Waiter can serve it.
+
+### Test notes
+
+Both runs use piped input and produce identical results on every execution.
+
+#### Victory run
+
+```bash
+./run.sh <<'EOF'
+seat C1
+wait
+order C1
+prepare C1
+serve C1
+wait
+seat C4
+wait
+order C4
+prepare C4
+serve C4
+wait
+seat C7
+wait
+order C7
+prepare C7
+serve C7
+wait
+seat C10
+wait
+order C10
+prepare C10
+wait
+prepare C10
+serve C10
+wait
+seat C13
+wait
+order C13
+prepare C13
+serve C13
+wait
+wait
+wait
+wait
+wait
+EOF
+```
+
+The run serves C1, C4, C7, C10, and C13. C16 arrives on turn 16 and cannot finish paying within 18 turns, so at most five customers can pay. C4's VIP discount makes the Burger $13.50, and C10's Critic order is Pasta ($18.00, 2 prep units), so the Chef spends two turns on it.
+
+Expected final result:
+
+```text
+============================================================
+                         GAME OVER
+============================================================
+
+                       FINAL RESULTS
+------------------------------------------------------------
+  Served Customers                5
+  Unhappy Departures              0
+  Paid Customers                  5
+  Total Revenue              $64.50
+  Avg. Paid Satisfaction       79.6
+  Turns Used                     18
+
+============================================================
+                      VICTORY TARGETS
+============================================================
+  Objective                    Actual     Target   Status
+------------------------------------------------------------
+  Paid Customers                    5          4   [PASS]
+  Total Revenue                $64.50     $45.00   [PASS]
+  Avg. Paid Satisfaction         79.6       60.0   [PASS]
+------------------------------------------------------------
+
+                 *** VICTORY ACHIEVED! ***
+
+                All 3 victory targets met.
+============================================================
+```
+
+#### Defeat run
+
+```bash
+for turn in $(seq 1 18); do
+  echo wait  # Waiter
+  echo wait  # Chef
+done | ./run.sh
+```
+
+Every prompt is answered with `wait`. C1 and C10 are the two customers who lose enough satisfaction to leave before the game ends.
+
+Expected final result:
+
+```text
+============================================================
+                         GAME OVER
+============================================================
+
+                       FINAL RESULTS
+------------------------------------------------------------
+  Served Customers                0
+  Unhappy Departures              2
+  Paid Customers                  0
+  Total Revenue               $0.00
+  Avg. Paid Satisfaction        N/A
+  Turns Used                     18
+
+============================================================
+                      VICTORY TARGETS
+============================================================
+  Objective                    Actual     Target   Status
+------------------------------------------------------------
+  Paid Customers                    0          4   [FAIL]
+  Total Revenue                 $0.00     $45.00   [FAIL]
+  Avg. Paid Satisfaction          N/A       60.0   [FAIL]
+------------------------------------------------------------
+
+                       *** DEFEAT ***
+
+                0 of 3 victory targets met.
+============================================================
+```
+
 ## Stage transitions
 
 Each transition records what changed between tags, so the diff can be reviewed without reading every file.
 
 ### Stage 1 to Stage 2
 
-To be completed when `stage-2` is tagged.
-
-- **New files:** —
-- **Changed files:** — *(reason)*
-- **Deleted files:** —
-- **Compare:** —
+- **New files:**
+  - `RegularCustomer`, `VIPCustomer`, `CriticCustomer` — the three customer types, each with its own loss rate, discount, and menu choice.
+  - `ArrivalSchedule` — maps each turn to its customer type, replacing the Stage 1 `(turn - 1) % 3` rule.
+  - `PricingService` — applies the customer's discount and returns the price to lock on the order.
+- **Changed files:**
+  - `Customer` — now abstract; stores the loss and discount rates supplied by each subclass; `chooseItem` and `getTypeName` are polymorphic.
+  - `Order` — `orderPrice` became `lockedPrice`, passed in when the order is taken.
+  - `Money` — added `multiply(double)` for discounts.
+  - `Waiter` — receives `PricingService`; `takeOrder` locks the price and shows the customer type.
+  - `Cashier` — charges `getLockedPrice()`.
+  - `GameController` — receives `ArrivalSchedule`; `processArrivals` asks it for the turn's customers.
+  - `GameCLI` — shows the customer type and explains the VIP/Critic rules in the welcome.
+  - `Main` — wires `PricingService` and `ArrivalSchedule`.
+- **Deleted files:** none.
+- **What still works:**
+  - The Stage 1 turn order, seating, ordering, serving, eating/payment timing, abandonment, and victory/defeat rules are unchanged.
+  - The Stage 2 victory and defeat runs above pass.
+  - The Stage 1 defeat script still produces a defeat. The Stage 1 victory script is not reused verbatim because C10 now orders 2-unit Pasta; the Stage 2 victory run replaces it.
+- **Design effect:**
+  - Customer behaviour is polymorphic through `chooseItem`, `getDiscountRate`, and `getTypeName`; the loss rate is supplied by the subclass through the constructor. `GameController` has no customer type checks.
+  - Arrival scheduling and pricing are separate responsibilities, so the controller only orchestrates the turn.
+  - `Order.lockedPrice` prevents later menu or pricing changes from altering an existing order.
 
 ### Stage 2 to Stage 3
 
@@ -262,14 +432,16 @@ To be completed when `stage-3` is tagged.
 - **New files:** —
 - **Changed files:** — *(reason)*
 - **Deleted files:** —
+- **What still works:** —
+- **Design effect:** —
 - **Compare:** —
 
 ## Design Diagrams
 
-The Stage 1 class diagram is available as an image. Stage 2 and 3 diagrams will be added with their stages.
+The Stage 1 and Stage 2 class diagrams are available as images. Stage 3 will be added with its stage.
 
 | Stage | Diagram |
 |---|---|
 | 1 | [Stage1_ClassDiagram.png](docs/Stage1_ClassDiagram.png) |
-| 2 | |
+| 2 | [Stage2_ClassDiagram.png](docs/Stage2_ClassDiagram.png) |
 | 3 | |

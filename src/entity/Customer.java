@@ -2,17 +2,20 @@ package src.entity;
 
 import java.util.Random;
 
-public class Customer {
+public abstract class Customer {
     private final String id;
     private int satisfaction = 100;
     private CustomerState state;
     private Order currentOrder;
-    protected final int satisfactionLossRate = 8;
+    private final int satisfactionLossRate;
+    private final double discountRate;
 
     // Constructor
-    public Customer(String id) {
+    protected Customer(String id, int satisfactionLossRate, double discountRate) {
         this.id = id;
         this.state = CustomerState.QUEUED;
+        this.satisfactionLossRate = satisfactionLossRate;
+        this.discountRate = discountRate;
     }
 
     private void reduceSatisfaction(int amount) {
@@ -33,12 +36,17 @@ public class Customer {
         }
     }
 
-    public AlaCarteItem chooseItem(Menu menu) {
-        // Seeded randomness for customer to choose their own food
+    // Each customer type defines how they choose from the menu
+    public abstract AlaCarteItem chooseItem(Menu menu);
+
+    // Seeded randomness for a reproducible menu choice
+    protected AlaCarteItem chooseBySeed(Menu menu) {
         Random random = new Random(id.hashCode());
         int choice = random.nextInt(menu.getMenuItems().size());
         return menu.getMenuItems().get(choice);
     }
+
+    public abstract String getTypeName();
 
     public String getId() {
         return id;
@@ -58,5 +66,9 @@ public class Customer {
 
     public Order getCurrentOrder() {
         return currentOrder;
+    }
+
+    public double getDiscountRate() {
+        return discountRate;
     }
 }

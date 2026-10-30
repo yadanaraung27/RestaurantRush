@@ -22,10 +22,12 @@ public class GameController {
     private final Set<Customer> eatingAtTurnStart = new HashSet<>();
     private final Restaurant restaurant;
     private final GameCLI ui;
+    private final ArrivalSchedule arrivalSchedule;
 
-    public GameController(Restaurant restaurant, GameCLI ui) {
+    public GameController(Restaurant restaurant, GameCLI ui, ArrivalSchedule arrivalSchedule) {
         this.restaurant = restaurant;
         this.ui = ui;
+        this.arrivalSchedule = arrivalSchedule;
     }
 
     public void runGame() {
@@ -57,11 +59,10 @@ public class GameController {
     }
 
     private void processArrivals() {
-        if ((currentTurn - 1) % 3 == 0) {
-            Customer customer = new Customer("C" + currentTurn);
+        for (Customer customer : arrivalSchedule.getArrivalsForTurn(currentTurn)) {
             restaurant.addCustomer(customer);
             restaurant.getWaitingQueue().enqueue(customer);
-            ui.displayMessage("Customer " + customer.getId() + " arrived and entered the waiting queue.");
+            ui.displayMessage(customer.getTypeName() + " " + customer.getId() + " arrived and entered the waiting queue.");
         }
     }
 

@@ -25,6 +25,11 @@ public class Money {
         return new Money(this.cents + other.cents);
     }
 
+    // Multiply by a rate, rounding to the nearest cent
+    public Money multiply(double rate) {
+        return new Money((int) Math.round(cents * rate));
+    }
+
     public int getCents() {
         return cents;
     }

@@ -5,15 +5,15 @@ public class Order {
     private final AlaCarteItem item;
     private OrderStatus status;
     private int prepUnitsRemaining;
-    private final Money orderPrice;
+    private final Money lockedPrice; // Price is locked when the order is taken, unaffected by later menu or pricing changes
 
     // Constructor
-    public Order(Customer customer, AlaCarteItem item) {
+    public Order(Customer customer, AlaCarteItem item, Money lockedPrice) {
         this.customer = customer;
         this.item = item;
         this.status = OrderStatus.PENDING;
         this.prepUnitsRemaining = item.getPrepUnits();
-        this.orderPrice = item.getPrice();
+        this.lockedPrice = lockedPrice;
     }
 
     public void advancePrep() {
@@ -38,8 +38,8 @@ public class Order {
         return item.getPrepUnits() - prepUnitsRemaining;
     }
 
-    public Money getOrderPrice() {
-        return orderPrice;
+    public Money getLockedPrice() {
+        return lockedPrice;
     }
 
     public OrderStatus getStatus() {

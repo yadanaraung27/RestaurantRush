@@ -30,6 +30,7 @@ public class GameCLI {
         System.out.println("  \"wait\" skips that staff member's action for the turn.");
         System.out.println();
         System.out.println("  Customers choose their own meal; you never choose it.");
+        System.out.println("  VIP customers pay 10% less; Critic customers order the most expensive item.");
         System.out.println();
         System.out.println("  Victory conditions:");
         System.out.println("    1. At least " + GameResult.REQUIRED_PAID_CUSTOMERS + " paid customers");
@@ -69,11 +70,11 @@ public class GameCLI {
         if (restaurant.getCustomers().isEmpty()) {
             System.out.println("  (none yet)");
         } else {
-            System.out.printf("  %-4s %-12s %-14s %s%n", "ID", "Satisfaction", "State", "Order");
+            System.out.printf("  %-4s %-8s %-12s %-14s %s%n", "ID", "Type", "Satisfaction", "State", "Order");
             for (Customer customer : restaurant.getCustomers()) {
                 Order order = customer.getCurrentOrder();
                 String orderText = order == null ? "-" : order.getItem().getName() + "/" + order.getStatus();
-                System.out.printf("  %-4s %-12d %-14s %s%n", customer.getId(), customer.getSatisfaction(), customer.getState(), orderText);
+                System.out.printf("  %-4s %-8s %-12d %-14s %s%n", customer.getId(), customer.getTypeName(), customer.getSatisfaction(), customer.getState(), orderText);
             }
         }
 

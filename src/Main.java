@@ -1,8 +1,10 @@
 package src;
 
 import src.boundary.GameCLI;
+import src.control.ArrivalSchedule;
 import src.control.GameController;
 import src.entity.*;
+import src.service.PricingService;
 import src.staff.*;
 
 import java.util.Arrays;
@@ -16,15 +18,17 @@ public class Main {
                 new AlaCarteItem("Pasta", Money.ofDollars(18.00), 2)
         ));
 
-        // Initialise Tables & Staff
+        // Initialise pricing, arrivals, tables and staff
+        PricingService pricingService = new PricingService();
+        ArrivalSchedule arrivalSchedule = new ArrivalSchedule();
         Restaurant restaurant = new Restaurant(
                 Arrays.asList(new Table(1), new Table(2)),
                 menu,
-                Arrays.asList(new Waiter(), new Chef(), new Cashier())
+                Arrays.asList(new Waiter(pricingService), new Chef(), new Cashier())
         );
 
         GameCLI cli = new GameCLI();
-        GameController controller = new GameController(restaurant, cli);
+        GameController controller = new GameController(restaurant, cli, arrivalSchedule);
 
         controller.runGame();
     }
