@@ -2,13 +2,13 @@ package src.entity;
 
 public class Order {
     private final Customer customer;
-    private final AlaCarteItem item;
+    private final MenuItem item;
     private OrderStatus status;
     private int prepUnitsRemaining;
     private final Money lockedPrice; // Price is locked when the order is taken, unaffected by later menu or pricing changes
 
     // Constructor
-    public Order(Customer customer, AlaCarteItem item, Money lockedPrice) {
+    public Order(Customer customer, MenuItem item, Money lockedPrice) {
         this.customer = customer;
         this.item = item;
         this.status = OrderStatus.PENDING;
@@ -46,7 +46,7 @@ public class Order {
         return status;
     }
 
-    public AlaCarteItem getItem() {
+    public MenuItem getItem() {
         return item;
     }
 }
