@@ -1,20 +1,19 @@
 package src.staff;
 
-import src.entity.AlaCarteItem;
 import src.entity.Customer;
 import src.entity.CustomerState;
+import src.entity.MenuItem;
 import src.entity.Money;
 import src.entity.Order;
 import src.entity.OrderStatus;
 import src.entity.Restaurant;
-import src.entity.Table;
 import src.exception.InvalidActionException;
 import src.service.PricingService;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Waiter extends Staff {
+public class Waiter extends FrontStaff {
     private final PricingService pricingService;
 
     // Constructor
@@ -33,22 +32,10 @@ public class Waiter extends Staff {
         };
     }
 
-    // Seat the chosen waiting customer at the first free table
-    private String seatCustomer(Restaurant restaurant, String targetId) throws InvalidActionException {
-        Table table = restaurant.getFreeTable();
-        if (table == null) {
-            throw new InvalidActionException("No free table is available.");
-        }
-        Customer customer = findCustomer(restaurant.getCustomersWaitingToBeSeated(), targetId, "the waiting queue");
-        table.seatCustomer(customer);
-        restaurant.getWaitingQueue().dequeue(customer);
-        return "Seated " + customer.getId() + " at table " + table.getTableNumber() + ".";
-    }
-
     // Take the chosen seated customer's order
     private String takeOrder(Restaurant restaurant, String targetId) throws InvalidActionException {
         Customer customer = findCustomer(restaurant.getCustomersWaitingToOrder(), targetId, "the customers waiting to order");
-        AlaCarteItem item = customer.chooseItem(restaurant.getMenu());
+        MenuItem item = customer.chooseMenuItem(restaurant.getMenu());
         Money lockedPrice = pricingService.calculateLockedPrice(item, customer);
         Order order = new Order(customer, item, lockedPrice);
         customer.assignOrder(order);
