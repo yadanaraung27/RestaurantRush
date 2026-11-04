@@ -23,11 +23,14 @@ public class GameController {
     private final Restaurant restaurant;
     private final GameCLI ui;
     private final ArrivalSchedule arrivalSchedule;
+    private final HappyHourPolicy happyHourPolicy;
 
-    public GameController(Restaurant restaurant, GameCLI ui, ArrivalSchedule arrivalSchedule) {
+    // Constructor
+    public GameController(Restaurant restaurant, GameCLI ui, ArrivalSchedule arrivalSchedule, HappyHourPolicy happyHourPolicy) {
         this.restaurant = restaurant;
         this.ui = ui;
         this.arrivalSchedule = arrivalSchedule;
+        this.happyHourPolicy = happyHourPolicy;
     }
 
     public void runGame() {
@@ -45,24 +48,56 @@ public class GameController {
         restaurant.getCustomers().stream()
                 .filter(customer -> customer.getState() == CustomerState.EATING)
                 .forEach(eatingAtTurnStart::add);
+        // Recover satisfaction before the summary when Happy Hour is already active
+        boolean happyHourWasActive = happyHourPolicy.isActive();
+        if (happyHourWasActive) {
+            happyHourPolicy.applyTurnBenefits(restaurant.getCustomers());
+        }
         // Start of turn summary
-        ui.displayTurnState(restaurant, currentTurn, evaluateGameResult());
+        ui.displayTurnState(restaurant, currentTurn, evaluateGameResult(), happyHourPolicy);
+        if (happyHourWasActive) {
+            ui.displayMessage("[*] Happy Hour: Waiting customers will recover 15 satisfaction");
+        }
+        // Let the manager activate Happy Hour before arrivals and actions
+        offerHappyHour();
         // Process arrival of new actions
         processArrivals();
-        // Collect waiter and chef actions
+        // Recover satisfaction on the activation turn
+        if (!happyHourWasActive) {
+            applyHappyHourBenefits();
+        }
+        // Collect host, waiter and chef actions
         int paymentStep = collectManagerActions();
         processEatingAndPayment(paymentStep);
         // Handle satisfaction loss
         handleAbandonment();
+        // Advance the Happy Hour duration
+        happyHourPolicy.advanceTurn();
         // End of turn summary
         ui.displayTurnResult(evaluateGameResult());
+    }
+
+    private void offerHappyHour() {
+        if (happyHourPolicy.canActivate()) {
+            if (ui.promptHappyHourActivation()) {
+                happyHourPolicy.activate();
+                ui.displayMessage("[*] Happy Hour: Activated for this turn and the next.");
+            }
+        }
+    }
+
+    private void applyHappyHourBenefits() {
+        if (happyHourPolicy.isActive()) {
+            happyHourPolicy.applyTurnBenefits(restaurant.getCustomers());
+            ui.displayMessage("[*] Happy Hour: Waiting customers will recover 15 satisfaction");
+        }
     }
 
     private void processArrivals() {
         for (Customer customer : arrivalSchedule.getArrivalsForTurn(currentTurn)) {
             restaurant.addCustomer(customer);
             restaurant.getWaitingQueue().enqueue(customer);
-            ui.displayMessage(customer.getTypeName() + " " + customer.getId() + " arrived and entered the waiting queue.");
+            ui.displayMessage("[+] " + customer.getTypeName() + " " + customer.getId() + " has arrived.");
         }
     }
 
