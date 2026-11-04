@@ -22,6 +22,10 @@ public abstract class Customer {
         this.satisfaction = Math.max(0, this.satisfaction - amount);
     }
 
+    public void boostSatisfaction(int amount) {
+        this.satisfaction = Math.min(100, this.satisfaction + amount);
+    }
+
     public void assignOrder(Order order) {
         this.currentOrder = order;
         this.state = CustomerState.WAITING_FOOD;
@@ -36,11 +40,15 @@ public abstract class Customer {
         }
     }
 
+    public boolean isWaitingForTableOrFood() {
+        return state == CustomerState.QUEUED || state == CustomerState.SEATED || state == CustomerState.WAITING_FOOD;
+    }
+
     // Each customer type defines how they choose from the menu
-    public abstract AlaCarteItem chooseItem(Menu menu);
+    public abstract MenuItem chooseMenuItem(Menu menu);
 
     // Seeded randomness for a reproducible menu choice
-    protected AlaCarteItem chooseBySeed(Menu menu) {
+    protected MenuItem chooseBySeed(Menu menu) {
         Random random = new Random(id.hashCode());
         int choice = random.nextInt(menu.getMenuItems().size());
         return menu.getMenuItems().get(choice);

@@ -9,7 +9,7 @@ public class VIPCustomer extends Customer {
         super(id, LOSS_RATE, DISCOUNT_RATE);
     }
 
-    public AlaCarteItem chooseItem(Menu menu) {
+    public MenuItem chooseMenuItem(Menu menu) {
         return chooseBySeed(menu);
     }
 
