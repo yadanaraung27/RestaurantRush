@@ -1,5 +1,6 @@
 package src.boundary;
 
+import src.control.HappyHourPolicy;
 import src.entity.Customer;
 import src.entity.GameResult;
 import src.entity.Money;
@@ -22,15 +23,18 @@ public class GameCLI {
         System.out.println("  Manage your restaurant for " + maxTurns + " turns.");
         System.out.println();
         System.out.println("  Each turn:");
-        System.out.println("    1. Waiter  - seat, order, or serve one customer you name, or wait");
-        System.out.println("    2. Chef    - prepare one order you name, or wait");
-        System.out.println("    3. Cashier - handle payment for oldest eligible customer");
+        System.out.println("    1. Host    - seat one queued customer, or wait");
+        System.out.println("    2. Waiter  - seat, order, or serve one customer you name, or wait");
+        System.out.println("    3. Chef    - prepare one order you name, or wait");
+        System.out.println("    4. Cashier - handle payment for oldest eligible customer");
         System.out.println();
         System.out.println("  Type an action and a customer ID, for example \"seat C1\".");
         System.out.println("  \"wait\" skips that staff member's action for the turn.");
         System.out.println();
         System.out.println("  Customers choose their own meal; you never choose it.");
         System.out.println("  VIP customers pay 10% less; Critic customers order the most expensive item.");
+        System.out.println("  The menu includes a combo: two items at 90% of their combined price.");
+        System.out.println("  Happy Hour can be activated once per game for this turn and the next.");
         System.out.println();
         System.out.println("  Victory conditions:");
         System.out.println("    1. At least " + GameResult.REQUIRED_PAID_CUSTOMERS + " paid customers");
@@ -39,7 +43,7 @@ public class GameCLI {
         System.out.println("============================================================");
     }
 
-    public void displayTurnState(Restaurant restaurant, int turn, GameResult result) {
+    public void displayTurnState(Restaurant restaurant, int turn, GameResult result, HappyHourPolicy happyHourPolicy) {
         System.out.println();
         System.out.println("============================================================");
         System.out.println(" TURN " + turn);
@@ -47,6 +51,20 @@ public class GameCLI {
         System.out.printf("  %-24s %8d%n", "Paid Customers", result.getPaidCustomers());
         System.out.printf("  %-24s %8s%n", "Total Revenue", result.getRevenue());
         System.out.printf("  %-24s %8s%n", "Avg. Paid Satisfaction", averageSatisfactionText(result));
+        String happyHour;
+        if (happyHourPolicy.isActive()) {
+            int turns = happyHourPolicy.getTurnsRemaining();
+            String unit = " turns)";
+            if (turns == 1) {
+                unit = " turn)";
+            }
+            happyHour = "active (" + turns + unit;
+        } else if (happyHourPolicy.hasBeenUsed()) {
+            happyHour = "used";
+        } else {
+            happyHour = "available";
+        }
+        System.out.println("  Happy Hour: " + happyHour);
 
         System.out.println();
         System.out.println("Waiting queue:");
@@ -127,6 +145,31 @@ public class GameCLI {
             throw new InvalidActionException("Choose a number from 1 to " + actions.size() + ", or type the command, for example '" + actions.get(0) + "'.");
         }
         return actions.get(index - 1);
+    }
+
+    // Ask whether to activate Happy Hour at the start of a turn
+    public boolean promptHappyHourActivation() {
+        while (true) {
+            System.out.println();
+            System.out.print("  Activate Happy Hour for this turn and the next? (y/n): ");
+            if (!scanner.hasNextLine()) {
+                System.out.println();
+                return false;
+            }
+            String answer = scanner.nextLine().trim().toLowerCase();
+            if (System.console() == null) {
+                // Piped input is not echoed, so show the answer on the prompt line
+                System.out.println(answer);
+            }
+            System.out.println();
+            if (answer.equals("y") || answer.equals("yes")) {
+                return true;
+            }
+            if (answer.equals("n") || answer.equals("no") || answer.isBlank()) {
+                return false;
+            }
+            System.out.println("  Please answer y or n.");
+        }
     }
 
     // Show outcome of action player chose
