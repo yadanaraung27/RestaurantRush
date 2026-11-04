@@ -9,10 +9,10 @@ public class CriticCustomer extends Customer {
         super(id, LOSS_RATE, DISCOUNT_RATE);
     }
 
-    // Critics always order the most expensive item; ties keep menu order
-    public AlaCarteItem chooseItem(Menu menu) {
-        AlaCarteItem mostExpensive = null;
-        for (AlaCarteItem item : menu.getMenuItems()) {
+    // Critics always order the most expensive item
+    public MenuItem chooseMenuItem(Menu menu) {
+        MenuItem mostExpensive = null;
+        for (MenuItem item : menu.getMenuItems()) {
             if (mostExpensive == null || item.getPrice().getCents() > mostExpensive.getPrice().getCents()) {
                 mostExpensive = item;
             }

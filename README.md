@@ -19,6 +19,10 @@ RestaurantRush is a turn-based restaurant management game written in Java for th
   - [Features](#features-1)
   - [How to play](#how-to-play-1)
   - [Test notes](#test-notes-1)
+- [Stage 3 - New role and menu policy](#stage-3---new-role-and-menu-policy)
+  - [Features](#features-2)
+  - [How to play](#how-to-play-2)
+  - [Test notes](#test-notes-2)
 - [Stage transitions](#stage-transitions)
   - [Stage 1 to Stage 2](#stage-1-to-stage-2)
   - [Stage 2 to Stage 3](#stage-2-to-stage-3)
@@ -32,7 +36,7 @@ Each stage is a separate runnable version tagged in GitHub, and each builds on t
 |---|---|---|
 | 1 | `stage-1` | Regular customers, an a-la-carte menu, Waiter/Chef/Cashier, the full turn loop, and victory/defeat. |
 | 2 | `stage-2` | Replaces two of the regular arrivals with a VIP and a Critic. The VIP loses 5 satisfaction per waiting turn and pays 10% less; the Critic loses 12 per turn and chooses the most expensive item on the menu. Adds `ArrivalSchedule` and `PricingService`. |
-| 3 | `stage-3` | Adds the Host (one extra seating per turn), ComboMeal (two items priced at 90% of their combined price, with preparation units summed), and Happy Hour (20% off orders taken while active, plus a satisfaction recovery at turn start). `PricingService` applies the VIP discount first, then Happy Hour. |
+| 3 | `stage-3` | Adds the Host (one extra seating per turn), three ComboMeals (90% of their components' combined price, with preparation units summed), and Happy Hour (once per game, two turns, 20% off orders, plus a 15-point satisfaction recovery). Adds `MenuItem`, `FrontStaff`, and `HappyHourPolicy`; `PricingService` applies the VIP discount first, then Happy Hour. |
 
 ## Requirements
 
@@ -396,6 +400,223 @@ Expected final result:
 ============================================================
 ```
 
+## Stage 3 - New role and menu policy
+
+Stage 3 adds the Host, combo meals, and Happy Hour. It is independently playable with the same build and `run.sh`, and it uses the same victory and defeat targets.
+
+### Features
+
+- **Host**: seats at most one queued customer per turn, in addition to the Waiter. The Waiter can still seat.
+- **ComboMeal**: the menu includes three combos alongside the a-la-carte items:
+  - Salad + Pasta — $24.30, 3 prep units.
+  - Salad + Burger — $21.60, 2 prep units.
+  - Pasta + Burger — $29.70, 3 prep units.
+  - Each combo costs 90% of its components' combined price; preparation units are the sum.
+- **Customer combo rule**: the menu holds `MenuItem`s. Regular and VIP customers use the seeded menu index; Critics choose the most expensive item. With the current menu, C10 chooses Pasta + Burger, C13 chooses Salad + Burger, and C16 chooses Salad + Pasta.
+- **Happy Hour**:
+  - can be activated once per game, at the start of a turn;
+  - lasts for the activation turn and the next;
+  - gives 20% off orders taken while active;
+  - recovers 15 satisfaction for customers still waiting for a table or food at turn start (maximum 100);
+  - applies the VIP discount first, then Happy Hour;
+  - locks the price when the order is taken;
+  - shows `available`, `active (N turns)`, or `used` in the turn display.
+
+Current menu choices:
+
+| Customer | Type | Order | Price | Prep units |
+|---|---|---|---|---|
+| C1 | Regular | Salad | $9.00 | 1 |
+| C4 | VIP | Pasta | $12.96 during Happy Hour ($16.20 otherwise) | 2 |
+| C7 | Regular | Salad | $9.00 | 1 |
+| C10 | Critic | Pasta + Burger | $29.70 | 3 |
+| C13 | Regular | Salad + Burger | $21.60 | 2 |
+| C16 | Regular | Salad + Pasta | $24.30 | 3 |
+
+### How to play
+
+Each turn:
+
+1. Answer the Happy Hour prompt, if it appears: `y` to activate, `n` to decline.
+2. Choose one Host action: `seat C1` or `wait`.
+3. Choose one Waiter action: `seat C1`, `order C1`, `serve C1`, or `wait`.
+4. Choose one Chef action: `prepare C1` or `wait`.
+5. The Cashier automatically handles payment of the oldest eligible customer.
+
+The Host and Waiter can both seat, so two customers can be seated in one turn when two tables are free. The Waiter can also use that turn to take an order or serve.
+
+Example from the recording run:
+
+```text
+  Activate Happy Hour for this turn and the next? (y/n): y
+
+  [*] Happy Hour: Activated for this turn and the next.
+  [+] VIP C4 has arrived.
+  [*] Happy Hour: Waiting customers will recover 15 satisfaction
+
+  1. Host action (1 per turn)
+     [1] seat C4
+     [2] wait
+     > seat C4
+  >> Seated C4 at table 2.
+
+  2. Waiter action (1 per turn)
+     [1] order C4
+     [2] wait
+     > order C4
+  >> C4 (VIP) chose Pasta ($12.96, 2 prep units).
+```
+
+The recording run activates Happy Hour on **turn 4**, when C4 arrives. The Host seats C4, and the Waiter takes the order in the same turn. C4 ends turn 4 at 95; the turn-5 recovery brings C4 back to 100. The VIP discount applies first, then Happy Hour: $18 × 0.9 × 0.8 = $12.96.
+
+### Test notes
+
+Both runs use piped input and produce identical results on every execution.
+
+#### Victory run
+
+```bash
+./run.sh <<'EOF'
+n
+seat C1
+wait
+wait
+n
+wait
+order C1
+prepare C1
+n
+wait
+serve C1
+wait
+y
+seat C4
+order C4
+prepare C4
+wait
+wait
+prepare C4
+wait
+serve C4
+wait
+seat C7
+wait
+wait
+wait
+order C7
+prepare C7
+wait
+serve C7
+wait
+seat C10
+wait
+wait
+wait
+order C10
+prepare C10
+wait
+wait
+prepare C10
+seat C13
+order C13
+prepare C10
+wait
+serve C10
+prepare C13
+wait
+wait
+prepare C13
+wait
+serve C13
+wait
+seat C16
+wait
+wait
+wait
+wait
+wait
+EOF
+```
+
+The first three `n` values decline Happy Hour on turns 1–3; the `y` activates it on turn 4. The run serves C1, C4, C7, C10, and C13. C16 arrives on turn 16 and cannot finish paying within 18 turns.
+
+Expected final result:
+
+```text
+============================================================
+                         GAME OVER
+============================================================
+
+                       FINAL RESULTS
+------------------------------------------------------------
+  Served Customers                5
+  Unhappy Departures              0
+  Paid Customers                  5
+  Total Revenue              $82.26
+  Avg. Paid Satisfaction       78.2
+  Turns Used                     18
+
+============================================================
+                      VICTORY TARGETS
+============================================================
+  Objective                    Actual     Target   Status
+------------------------------------------------------------
+  Paid Customers                    5          4   [PASS]
+  Total Revenue                $82.26     $45.00   [PASS]
+  Avg. Paid Satisfaction         78.2       60.0   [PASS]
+------------------------------------------------------------
+
+                 *** VICTORY ACHIEVED! ***
+
+                All 3 victory targets met.
+============================================================
+```
+
+#### Defeat run
+
+```bash
+for turn in $(seq 1 18); do
+  echo n        # Happy Hour
+  echo wait     # Host
+  echo wait     # Waiter
+  echo wait     # Chef
+done | ./run.sh
+```
+
+Every prompt is declined or answered with `wait`. C1 and C10 are the two customers who lose enough satisfaction to leave before the game ends.
+
+Expected final result:
+
+```text
+============================================================
+                         GAME OVER
+============================================================
+
+                       FINAL RESULTS
+------------------------------------------------------------
+  Served Customers                0
+  Unhappy Departures              2
+  Paid Customers                  0
+  Total Revenue               $0.00
+  Avg. Paid Satisfaction        N/A
+  Turns Used                     18
+
+============================================================
+                      VICTORY TARGETS
+============================================================
+  Objective                    Actual     Target   Status
+------------------------------------------------------------
+  Paid Customers                    0          4   [FAIL]
+  Total Revenue                 $0.00     $45.00   [FAIL]
+  Avg. Paid Satisfaction          N/A       60.0   [FAIL]
+------------------------------------------------------------
+
+                       *** DEFEAT ***
+
+                0 of 3 victory targets met.
+============================================================
+```
+
 ## Stage transitions
 
 Each transition records what changed between tags, so the diff can be reviewed without reading every file.
@@ -427,21 +648,42 @@ Each transition records what changed between tags, so the diff can be reviewed w
 
 ### Stage 2 to Stage 3
 
-To be completed when `stage-3` is tagged.
-
-- **New files:** —
-- **Changed files:** — *(reason)*
-- **Deleted files:** —
-- **What still works:** —
-- **Design effect:** —
-- **Compare:** —
+- **New files:**
+  - `MenuItem` — interface shared by a-la-carte items and combos.
+  - `ComboMeal` — a `MenuItem` built from two components; price is 90% of the sum, preparation units are summed.
+  - `FrontStaff` — shared seating for the Waiter and Host.
+  - `Host` — seats at most one queued customer per turn, in addition to the Waiter.
+  - `HappyHourPolicy` — once-per-game activation, two-turn duration, 20% discount, and the 15-point satisfaction recovery.
+- **Changed files:**
+  - `AlaCarteItem` — implements `MenuItem`.
+  - `Menu` — stores `List<MenuItem>` so combos and a-la-carte items share one menu.
+  - `Order` — stores a `MenuItem` and keeps the locked price.
+  - `Customer` — adds `boostSatisfaction`, `isWaitingForTableOrFood`, and `chooseMenuItem`; the subclasses return `MenuItem`.
+  - `PricingService` — receives `HappyHourPolicy`; applies the customer discount first, then Happy Hour.
+  - `Waiter` — extends `FrontStaff`; `takeOrder` uses `MenuItem`.
+  - `GameController` — prompts the Host, offers Happy Hour, applies the recovery before the turn display, and advances its duration.
+  - `GameCLI` — Host/Waiter/Chef/Cashier prompts, Happy Hour status and prompt, `[+]` arrivals, and `[*]` Happy Hour messages.
+  - `Main` — builds the three combos, adds the Host, and wires `HappyHourPolicy`.
+  - `README.md`, `docs/stage3_mermaid`, `docs/Stage3_ClassDiagram.png`, `docs/stage3_sequence_mermaid.txt` — Stage 3 documentation.
+- **Deleted files:** none.
+- **What still works:**
+  - The Stage 1/2 turn order, seating, ordering, serving, eating/payment timing, abandonment, and victory/defeat rules are unchanged.
+  - The Stage 3 victory and defeat runs above pass; `javac -Xlint:all` is clean.
+  - The Stage 2 victory script is not reused because the menu now includes combos and the seeded choices changed; the Stage 3 victory run replaces it. The Stage 2 defeat script needs an `n` for the Happy Hour prompt; the Stage 3 defeat run includes it.
+- **Design effect:**
+  - `MenuItem` gives a composite/LSP design: `ComboMeal` is made of two `MenuItem`s, so `Menu`, `Order`, and `PricingService` treat combos and a-la-carte items uniformly.
+  - `FrontStaff` shares seating without forcing the Host to implement order/serve; the Host adds a second seating action per turn.
+  - `HappyHourPolicy` separates timing, discount, and recovery from the controller; `PricingService` composes the VIP and Happy Hour discounts.
+  - `Order.lockedPrice` keeps placed orders unaffected by later Happy Hour changes.
 
 ## Design Diagrams
 
-The Stage 1 and Stage 2 class diagrams are available as images. Stage 3 will be added with its stage.
+The Stage 1, Stage 2 and Stage 3 class diagrams are available as images.
 
 | Stage | Diagram |
 |---|---|
 | 1 | [Stage1_ClassDiagram.png](docs/Stage1_ClassDiagram.png) |
 | 2 | [Stage2_ClassDiagram.png](docs/Stage2_ClassDiagram.png) |
-| 3 | |
+| 3 | [Stage3_ClassDiagram.png](docs/Stage3_ClassDiagram.png) |
+
+Sequence diagram: [Stage 3 sequence diagram](docs/Stage3_SequenceDiagram.png) — follows C4 through payment and ends with the end-of-turn result. Staff waits and other customers' actions are noted but omitted from the diagram.

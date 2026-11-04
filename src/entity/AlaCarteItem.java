@@ -1,6 +1,6 @@
 package src.entity;
 
-public class AlaCarteItem {
+public class AlaCarteItem implements MenuItem {
     private final String name;
     private final Money price;
     private final int prepUnits;
