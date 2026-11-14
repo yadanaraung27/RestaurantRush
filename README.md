@@ -27,6 +27,7 @@ RestaurantRush is a turn-based restaurant management game written in Java for th
   - [Stage 1 to Stage 2](#stage-1-to-stage-2)
   - [Stage 2 to Stage 3](#stage-2-to-stage-3)
 - [Design Diagrams](#design-diagrams)
+- [Demo materials](#demo-materials)
 
 ## Project Stages
 
@@ -687,3 +688,8 @@ The Stage 1, Stage 2 and Stage 3 class diagrams are available as images.
 | 3 | [Stage3_ClassDiagram.png](docs/Stage3_ClassDiagram.png) |
 
 Sequence diagram: [Stage 3 sequence diagram](docs/Stage3_SequenceDiagram.png) — follows C4 through payment and ends with the end-of-turn result. Staff waits and other customers' actions are noted but omitted from the diagram.
+
+## Demo materials
+
+- [Demo slide deck](docs/SC2302_TAIS2_G2_DemoSlideDeck.pdf)
+- Demo video — refer to NTULearn submission
