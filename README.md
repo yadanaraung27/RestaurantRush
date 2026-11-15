@@ -1,6 +1,6 @@
 # RestaurantRush
 
-RestaurantRush is a turn-based restaurant management game written in Java for the SC2002 Object-Oriented Design & Programming assignment. The player manages the restaurant staff over 18 turns while customers arrive, queue for tables, order food, wait for the kitchen, eat, and pay. The game ends in victory or defeat based on paid customers, revenue, and average paid-customer satisfaction.
+RestaurantRush is a turn-based restaurant management game written in Java for the SC2302 Object-Oriented Design & Programming assignment. The player manages the restaurant staff over 18 turns while customers arrive, queue for tables, order food, wait for the kitchen, eat, and pay. The game ends in victory or defeat based on paid customers, revenue, and average paid-customer satisfaction.
 
 ## Table of Contents
 
@@ -28,6 +28,8 @@ RestaurantRush is a turn-based restaurant management game written in Java for th
   - [Stage 2 to Stage 3](#stage-2-to-stage-3)
 - [Design Diagrams](#design-diagrams)
 - [Demo materials](#demo-materials)
+  - [Demo video timestamps](#demo-video-timestamps)
+- [AI Use and Communication History](#ai-use-and-communication-history)
 
 ## Project Stages
 
@@ -35,9 +37,11 @@ Each stage is a separate runnable version tagged in GitHub, and each builds on t
 
 | Stage | Git tag | What it adds |
 |---|---|---|
-| 1 | `stage-1` | Regular customers, an a-la-carte menu, Waiter/Chef/Cashier, the full turn loop, and victory/defeat. |
-| 2 | `stage-2` | Replaces two of the regular arrivals with a VIP and a Critic. The VIP loses 5 satisfaction per waiting turn and pays 10% less; the Critic loses 12 per turn and chooses the most expensive item on the menu. Adds `ArrivalSchedule` and `PricingService`. |
-| 3 | `stage-3` | Adds the Host (one extra seating per turn), three ComboMeals (90% of their components' combined price, with preparation units summed), and Happy Hour (once per game, two turns, 20% off orders, plus a 15-point satisfaction recovery). Adds `MenuItem`, `FrontStaff`, and `HappyHourPolicy`; `PricingService` applies the VIP discount first, then Happy Hour. |
+| 1 | [`stage-1`](https://github.com/yadanaraung27/RestaurantRush/tree/stage-1) | Regular customers, an a-la-carte menu, Waiter/Chef/Cashier, the full turn loop, and victory/defeat. |
+| 2 | [`stage-2`](https://github.com/yadanaraung27/RestaurantRush/tree/stage-2) | Replaces two of the regular arrivals with a VIP and a Critic. The VIP loses 5 satisfaction per waiting turn and pays 10% less; the Critic loses 12 per turn and chooses the most expensive item on the menu. Adds `ArrivalSchedule` and `PricingService`. |
+| 3 | [`stage-3`](https://github.com/yadanaraung27/RestaurantRush/tree/stage-3) | Adds the Host (one extra seating per turn), three ComboMeals (90% of their components' combined price, with preparation units summed), and Happy Hour (once per game, two turns, 20% off orders, plus a 15-point satisfaction recovery). Adds `MenuItem`, `FrontStaff`, and `HappyHourPolicy`; `PricingService` applies the VIP discount first, then Happy Hour. |
+
+Compare the stages: [Stage 1 → Stage 2](https://github.com/yadanaraung27/RestaurantRush/compare/stage-1...stage-2) · [Stage 2 → Stage 3](https://github.com/yadanaraung27/RestaurantRush/compare/stage-2...stage-3).
 
 ## Requirements
 
@@ -692,4 +696,42 @@ Sequence diagram: [Stage 3 sequence diagram](docs/Stage3_SequenceDiagram.png) �
 ## Demo materials
 
 - [Demo slide deck](docs/SC2302_TAIS2_G2_DemoSlideDeck.pdf)
-- Demo video — refer to NTULearn submission
+- Demo video — submitted on NTULearn
+
+### Demo video timestamps
+
+| Segment | Speaker | Timestamp |
+|---|---|---|
+| Opening, repository and README | Speaker 1 | 00:00 |
+| Stage 1 features and class diagram | Speaker 2 | 00:37 |
+| Stage 1 gameplay | Speaker 1 | 3:17 |
+| Stage 2 features and class diagram | Speaker 3 | 6:41 |
+| Stage 2 gameplay | Speaker 1 | 8:38 |
+| Stage 3 features and class diagram | Speaker 4 | 10:22 |
+| Stage 3 gameplay | Speaker 1 | 12:16 |
+| Sequence diagram and closing | Speaker 5 | 14:55 |
+
+## AI Use and Communication History
+
+The team's exported AI chat histories are kept on the `feature/ai-history` branch in the `ai-history/` folder.
+
+The PDFs record the prompts and responses used during the project. The branch is deliberately separate from `main` and the runnable `stage-1`, `stage-2` and `stage-3` tags, so the evidence does not change the game code or the demo snapshots.
+
+### Why one branch and one folder
+
+Instead of creating a separate branch for each member, the team uses one shared branch and one folder:
+
+- **One review location:** the marker opens a single branch and finds the uploaded histories together.
+- **Less branch overhead:** there is no set of short-lived member branches to create, review and merge.
+- **Clear ownership:** each uploaded file is named `<Member>_AI_History.pdf`.
+- **No code impact:** the history branch is isolated from `main` and the stage tags.
+- **Easy updates:** adding another history is one file and one commit on the same branch.
+
+### How to open the histories
+
+**On GitHub**
+
+1. Open the repository: <https://github.com/yadanaraung27/RestaurantRush>.
+2. Use the branch selector to choose `feature/ai-history`.
+3. Open the `ai-history/` folder.
+4. Select the member's PDF.
